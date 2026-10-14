@@ -1,3 +1,31 @@
+// Máscara automática para data (DD/MM/AAAA)
+const dataInput = document.getElementById('dataEvento');
+dataInput.addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length >= 5) {
+    e.target.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4, 8)}`;
+  } else if (v.length >= 3) {
+    e.target.value = `${v.slice(0, 2)}/${v.slice(2)}`;
+  } else {
+    e.target.value = v;
+  }
+});
+
+// Máscara automática para CPF (000.000.000-00)
+const cpfInput = document.getElementById('cpfCliente');
+cpfInput.addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length >= 10) {
+    e.target.value = `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6, 9)}-${v.slice(9, 11)}`;
+  } else if (v.length >= 7) {
+    e.target.value = `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6)}`;
+  } else if (v.length >= 4) {
+    e.target.value = `${v.slice(0, 3)}.${v.slice(3)}`;
+  } else {
+    e.target.value = v;
+  }
+});
+
 document.getElementById('contractForm').addEventListener('submit', function (e) {
   e.preventDefault();
 
@@ -8,18 +36,26 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const nome = document.getElementById('nomeCliente').value.trim();
   const cpf = document.getElementById('cpfCliente').value.trim();
   const endCliente = document.getElementById('endCliente').value.trim();
-  const dataRaw = document.getElementById('dataEvento').value;
+  const dataRaw = document.getElementById('dataEvento').value.trim(); // Ex: "12/05/2026"
   const horario = document.getElementById('horarioEvento').value.trim();
   const tempoShow = document.getElementById('tempoShow').value.trim();
   const tipoEvento = document.getElementById('tipoEvento').value.trim();
   const localEvento = document.getElementById('localEvento').value.trim();
   const valorTotal = parseFloat(document.getElementById('valorTotal').value);
 
-  // --- CORREÇÃO MANUAL DA DATA ---
-  const partes = dataRaw.split('-');
-  const ano = partes[0];
-  const mesNum = parseInt(partes[1], 10);
-  const diaNum = parseInt(partes[2], 10);
+  // --- TRATAMENTO DA DATA NO FORMATO DIA/MÊS/ANO ---
+  let diaNum, mesNum, ano;
+  if (dataRaw.includes('/')) {
+    const partes = dataRaw.split('/');
+    diaNum = parseInt(partes[0], 10);
+    mesNum = parseInt(partes[1], 10);
+    ano = partes[2];
+  } else if (dataRaw.includes('-')) {
+    const partes = dataRaw.split('-');
+    ano = partes[0];
+    mesNum = parseInt(partes[1], 10);
+    diaNum = parseInt(partes[2], 10);
+  }
 
   const mesesNomes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -87,7 +123,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   doc.text(horario, margem + 130, y + 10);
   y += 20;
 
-  // --- FUNÇÃO DE SEÇÃO (com quebra de \n corrigida) ---
+  // --- FUNÇÃO DE SEÇÃO (quebra de \n tratada individualmente) ---
   function addSecao(titulo, texto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
