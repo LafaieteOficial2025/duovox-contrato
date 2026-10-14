@@ -8,31 +8,34 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const nome = document.getElementById('nomeCliente').value.trim();
   const cpf = document.getElementById('cpfCliente').value.trim();
   const endCliente = document.getElementById('endCliente').value.trim();
-  const dataRaw = document.getElementById('dataEvento').value; // Formato YYYY-MM-DD
+  const dataRaw = document.getElementById('dataEvento').value; // Ex: "2026-12-05"
   const horario = document.getElementById('horarioEvento').value.trim();
   const tipoEvento = document.getElementById('tipoEvento').value.trim();
   const localEvento = document.getElementById('localEvento').value.trim();
   const valorTotal = parseFloat(document.getElementById('valorTotal').value);
 
-  // --- TRATAMENTO CORRETO DA DATA (Evita inversão de fuso horário) ---
-  const partesData = dataRaw.split('-');
-  const ano = parseInt(partesData[0]);
-  const mes = parseInt(partesData[1]) - 1; // Mês no JS começa em 0
-  const dia = parseInt(partesData[2]);
+  // --- CORREÇÃO MANUAL DA DATA (Evita qualquer erro de fuso ou inversão) ---
+  const partes = dataRaw.split('-'); // [Ano, Mês, Dia]
+  const ano = partes[0];
+  const mesNum = parseInt(partes[1], 10);
+  const diaNum = parseInt(partes[2], 10);
 
-  const dataObj = new Date(ano, mes, dia);
+  const mesesNomes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  const mesNome = mesesNomes[mesNum - 1];
 
+  // Descobrir o dia da semana exato sem erros de fuso
+  const dataObjFixo = new Date(ano, mesNum - 1, diaNum);
   const diasSemana = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
-  const diaSemanaNome = diasSemana[dataObj.getDay()];
-  const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  const diaSemanaNome = diasSemana[dataObjFixo.getDay()];
+
+  const diaStr = String(diaNum).padStart(2, '0');
+  const mesStr = String(mesNum).padStart(2, '0');
   
-  const diaStr = String(dia).padStart(2, '0');
-  const mesStr = String(mes + 1).padStart(2, '0');
   const dataFormatada = `${diaStr}/${mesStr}/${ano}`;
-  const dataExtenso = `${diaSemanaNome}, ${dia} DE ${meses[mes]} DE ${ano}`;
+  const dataExtenso = `${diaSemanaNome}, ${diaNum} DE ${mesNome} DE ${ano}`;
 
   const primeiroNome = nome.split(' ')[0].toUpperCase();
-  const codContrato = `DV-${primeiroNome}-${diaStr}${mesStr}${String(ano).slice(-2)}`;
+  const codContrato = `DV-${primeiroNome}-${diaStr}${mesStr}${ano.slice(-2)}`;
 
   // Formatação dos valores
   const entrada = (valorTotal / 2).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -92,7 +95,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
     y += (linhasTitulo.length * 5) + 2;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(12); // Tamanho da letra pedido
+    doc.setFontSize(12); // Tamanho da letra exigido
     const linhasTexto = doc.splitTextToSize(texto, larguraMax);
     verificarQuebra(linhasTexto.length * 6);
     doc.text(linhasTexto, margem, y);
