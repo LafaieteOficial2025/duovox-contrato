@@ -8,24 +8,33 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const nome = document.getElementById('nomeCliente').value.trim();
   const cpf = document.getElementById('cpfCliente').value.trim();
   const endCliente = document.getElementById('endCliente').value.trim();
-  const dataRaw = document.getElementById('dataEvento').value;
+  const dataRaw = document.getElementById('dataEvento').value; // Formato YYYY-MM-DD
   const horario = document.getElementById('horarioEvento').value.trim();
   const tipoEvento = document.getElementById('tipoEvento').value.trim();
   const localEvento = document.getElementById('localEvento').value.trim();
   const valorTotal = parseFloat(document.getElementById('valorTotal').value);
 
-  // Tratamentos e formatações
-  const dataObj = new Date(dataRaw + 'T00:00:00');
-  const diasSemana = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇAS-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
-  const diaSemanaNome = diasSemana[dataObj.getDay()];
-  const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-  const dataExtenso = `${diaSemanaNome}, ${dataObj.getDate()} DE ${meses[dataObj.getMonth()].toUpperCase()} DE ${dataObj.getFullYear()}`;
-  const dataFormatada = dataObj.toLocaleDateString('pt-BR');
-  
-  const primeiroNome = nome.split(' ')[0].toUpperCase();
-  const diaMesAno = dataFormatada.replaceAll('/', '').slice(0, 4) + dataFormatada.slice(-2);
-  const codContrato = `DV-${primeiroNome}-${diaMesAno}`;
+  // --- TRATAMENTO CORRETO DA DATA (Evita inversão de fuso horário) ---
+  const partesData = dataRaw.split('-');
+  const ano = parseInt(partesData[0]);
+  const mes = parseInt(partesData[1]) - 1; // Mês no JS começa em 0
+  const dia = parseInt(partesData[2]);
 
+  const dataObj = new Date(ano, mes, dia);
+
+  const diasSemana = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
+  const diaSemanaNome = diasSemana[dataObj.getDay()];
+  const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  
+  const diaStr = String(dia).padStart(2, '0');
+  const mesStr = String(mes + 1).padStart(2, '0');
+  const dataFormatada = `${diaStr}/${mesStr}/${ano}`;
+  const dataExtenso = `${diaSemanaNome}, ${dia} DE ${meses[mes]} DE ${ano}`;
+
+  const primeiroNome = nome.split(' ')[0].toUpperCase();
+  const codContrato = `DV-${primeiroNome}-${diaStr}${mesStr}${String(ano).slice(-2)}`;
+
+  // Formatação dos valores
   const entrada = (valorTotal / 2).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const saldo = (valorTotal / 2).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const valorTotalStr = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -35,7 +44,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const larguraMax = 180;
 
   function verificarQuebra(alturaNecessaria) {
-    if (y + alturaNecessaria > 280) {
+    if (y + alturaNecessaria > 275) {
       doc.addPage();
       y = 15;
     }
@@ -43,47 +52,51 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
 
   // --- CABEÇALHO ---
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.text("DUOVOX", margem, y);
   y += 5;
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.text("MÚSICA PERFORMANCE EXPERIÊNCIA", margem, y);
   y += 6;
-  doc.setFontSize(10);
+  doc.setFontSize(12);
   doc.text("CONTRATO DE PRESTAÇÃO DE SERVIÇOS MUSICAIS E ARTÍSTICOS", margem, y);
-  y += 4;
-  doc.setFontSize(8);
+  y += 5;
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("Apresentação musical com fornecimento de sonorização e iluminação", margem, y);
-  y += 6;
+  y += 7;
 
   // Caixa de Resumo Superior
   doc.setDrawColor(150);
-  doc.rect(margem, y, larguraMax, 12);
+  doc.rect(margem, y, larguraMax, 14);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("CONTRATO", margem + 5, y + 4);
-  doc.text("DATA DO EVENTO", margem + 65, y + 4);
-  doc.text("HORÁRIO", margem + 130, y + 4);
+  doc.setFontSize(9);
+  doc.text("CONTRATO", margem + 5, y + 5);
+  doc.text("DATA DO EVENTO", margem + 65, y + 5);
+  doc.text("HORÁRIO", margem + 130, y + 5);
   
   doc.setFont("helvetica", "normal");
-  doc.text(codContrato, margem + 5, y + 9);
-  doc.text(dataFormatada, margem + 65, y + 9);
-  doc.text(horario, margem + 130, y + 9);
-  y += 18;
+  doc.setFontSize(10);
+  doc.text(codContrato, margem + 5, y + 10);
+  doc.text(dataFormatada, margem + 65, y + 10);
+  doc.text(horario, margem + 130, y + 10);
+  y += 20;
 
-  // Função auxiliar para seções
+  // Função para adicionar seções com FONTE 12
   function addSecao(titulo, texto) {
-    verificarQuebra(15);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(titulo, margem, y);
-    y += 4;
+    doc.setFontSize(12);
+    const linhasTitulo = doc.splitTextToSize(titulo, larguraMax);
+    verificarQuebra((linhasTitulo.length * 5) + 5);
+    doc.text(linhasTitulo, margem, y);
+    y += (linhasTitulo.length * 5) + 2;
+
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    const linhas = doc.splitTextToSize(texto, larguraMax);
-    doc.text(linhas, margem, y);
-    y += (linhas.length * 3.5) + 5;
+    doc.setFontSize(12); // Tamanho da letra pedido
+    const linhasTexto = doc.splitTextToSize(texto, larguraMax);
+    verificarQuebra(linhasTexto.length * 6);
+    doc.text(linhasTexto, margem, y);
+    y += (linhasTexto.length * 6) + 6;
   }
 
   // --- CLÁUSULAS ---
@@ -91,7 +104,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
     `CONTRATADA: DUOVOX, nome artístico do projeto musical, neste ato representada por Arnaldo Lafaiete Roque Lopes, RG nº 24.267.067-2 SSP/SP, CPF nº 067.234.088-70, doravante denominada CONTRATADA.\nCONTRATANTE: ${nome}, CPF nº ${cpf}, residente à ${endCliente}, doravante denominada CONTRATANTE.`);
 
   addSecao("2. OBJETO, LOCAL E DURAÇÃO", 
-    `A CONTRATADA realizará apresentação musical com o projeto DUOVOX, incluindo sonorização e iluminação, para evento do tipo "${tipoEvento}", nas condições abaixo:\n• DATA: ${dataExtenso}\n• HORÁRIO: Início às ${horario} (término previsto conforme duração combinada)\n• LOCAL: ${localEvento}\nA apresentação encerra-se no horário previsto. Qualquer prorrogação dependerá de disponibilidade e concordância prévia das partes, com valor adicional por hora ou fração expressamente combinado por escrito antes da extensão.`);
+    `A CONTRATADA realizará apresentação musical com o projeto DUOVOX, incluindo sonorização e iluminação, para evento do tipo "${tipoEvento}", nas condições abaixo:\n• DATA: ${dataExtenso}\n• HORÁRIO: ${horario}\n• LOCAL: ${localEvento}\nA apresentação encerra-se no horário previsto. Qualquer prorrogação dependerá de disponibilidade e concordância prévia das partes, com valor adicional por hora ou fração expressamente combinado por escrito antes da extensão.`);
 
   addSecao("3. VALOR E PAGAMENTO", 
     `VALOR TOTAL: ${valorTotalStr} | ENTRADA (50%): ${entrada} | SALDO (50%): ${saldo}\nA entrada de ${entrada} é devida na assinatura, para reserva da data. O saldo de ${saldo} deverá ser quitado até 18h do dia do evento, ou seja, até 2 (duas) horas antes do início previsto. A CONTRATADA poderá suspender a montagem ou a apresentação enquanto houver valor vencido e não pago.\nPIX: Titular Arnaldo Lafaiete Roque Lopes | Banco Nubank | Chave PIX: 17992248457. O pagamento será considerado realizado após a efetiva confirmação do crédito.`);
@@ -126,19 +139,21 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   addSecao("13. FORO E ASSINATURAS", 
     `Eventuais controvérsias serão submetidas ao foro legalmente competente, observando a proteção legal da CONTRATANTE como consumidora.`);
 
-  // --- ASSINATURAS ---
-  verificarQuebra(35);
+  // --- BLOCO DE ASSINATURAS ---
+  verificarQuebra(40);
   y += 10;
   doc.line(20, y, 90, y);
   doc.line(110, y, 180, y);
-  y += 4;
-  doc.setFontSize(8);
+  y += 5;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
   doc.text(`CONTRATANTE: ${nome}`, 20, y);
-  doc.text("CONTRATADA: DUOVOX (Arnaldo Lafaiete Roque Lopes)", 110, y);
-  y += 4;
+  doc.text("CONTRATADA: DUOVOX", 110, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
   doc.text(`CPF: ${cpf}`, 20, y);
-  doc.text("CPF: 067.234.088-70", 110, y);
+  doc.text("CPF: 067.234.088-70 (Arnaldo Lafaiete)", 110, y);
 
-  // Salvar PDF
+  // Download do PDF
   doc.save(`Contrato_${codContrato}.pdf`);
 });
