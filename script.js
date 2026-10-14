@@ -26,6 +26,52 @@ cpfInput.addEventListener('input', function(e) {
   }
 });
 
+// Função para formatar o Horário (ex: "20" -> "20h" / "20:30" -> "20h30")
+function formatarHorario(str) {
+  str = str.trim();
+  if (!str) return '';
+  if (/^\d+$/.test(str)) {
+    return `${str}h`;
+  }
+  if (str.includes(':')) {
+    const p = str.split(':');
+    return p[1] === '00' ? `${p[0]}h` : `${p[0]}h${p[1]}`;
+  }
+  return str.endsWith('h') || str.endsWith('H') ? str.toLowerCase() : `${str}h`;
+}
+
+// Função para formatar o Tempo de Show por extenso (ex: "3" -> "3h (três horas)")
+function formatarTempoShow(str) {
+  str = str.trim();
+  if (!str) return '';
+
+  const numerosExtenso = {
+    '1': 'uma hora',
+    '2': 'duas horas',
+    '3': 'três horas',
+    '4': 'quatro horas',
+    '5': 'cinco horas',
+    '6': 'seis horas',
+    '7': 'sete horas',
+    '8': 'oito horas',
+    '9': 'nove horas',
+    '10': 'dez horas'
+  };
+
+  // Se já tiver parênteses com extenso, retorna como está
+  if (str.includes('(')) return str;
+
+  // Extrai o número digitado
+  const numMatch = str.match(/\d+/);
+  if (numMatch) {
+    const num = numMatch[0];
+    const extenso = numerosExtenso[num] || `${num} horas`;
+    return `${num}h (${extenso})`;
+  }
+
+  return str;
+}
+
 document.getElementById('contractForm').addEventListener('submit', function (e) {
   e.preventDefault();
 
@@ -36,12 +82,16 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const nome = document.getElementById('nomeCliente').value.trim();
   const cpf = document.getElementById('cpfCliente').value.trim();
   const endCliente = document.getElementById('endCliente').value.trim();
-  const dataRaw = document.getElementById('dataEvento').value.trim(); // Ex: "12/05/2026"
-  const horario = document.getElementById('horarioEvento').value.trim();
-  const tempoShow = document.getElementById('tempoShow').value.trim();
+  const dataRaw = document.getElementById('dataEvento').value.trim();
+  const horarioRaw = document.getElementById('horarioEvento').value.trim();
+  const tempoShowRaw = document.getElementById('tempoShow').value.trim();
   const tipoEvento = document.getElementById('tipoEvento').value.trim();
   const localEvento = document.getElementById('localEvento').value.trim();
   const valorTotal = parseFloat(document.getElementById('valorTotal').value);
+
+  // Formatações automáticas de Horário e Tempo
+  const horario = formatarHorario(horarioRaw);
+  const tempoShow = formatarTempoShow(tempoShowRaw);
 
   // --- TRATAMENTO DA DATA NO FORMATO DIA/MÊS/ANO ---
   let diaNum, mesNum, ano;
@@ -123,7 +173,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   doc.text(horario, margem + 130, y + 10);
   y += 20;
 
-  // --- FUNÇÃO DE SEÇÃO (quebra de \n tratada individualmente) ---
+  // --- FUNÇÃO DE SEÇÃO ---
   function addSecao(titulo, texto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
