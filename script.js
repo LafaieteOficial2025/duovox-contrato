@@ -8,29 +8,31 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   const nome = document.getElementById('nomeCliente').value.trim();
   const cpf = document.getElementById('cpfCliente').value.trim();
   const endCliente = document.getElementById('endCliente').value.trim();
-  const dataRaw = document.getElementById('dataEvento').value; // Ex: "2026-12-05"
+  const dataRaw = document.getElementById('dataEvento').value;
   const horario = document.getElementById('horarioEvento').value.trim();
+  const tempoShow = document.getElementById('tempoShow').value.trim();
   const tipoEvento = document.getElementById('tipoEvento').value.trim();
   const localEvento = document.getElementById('localEvento').value.trim();
   const valorTotal = parseFloat(document.getElementById('valorTotal').value);
 
-  // --- CORREÇÃO MANUAL DA DATA (Evita qualquer erro de fuso ou inversão) ---
-  const partes = dataRaw.split('-'); // [Ano, Mês, Dia]
+  // --- CORREÇÃO MANUAL DA DATA ---
+  const partes = dataRaw.split('-');
   const ano = partes[0];
   const mesNum = parseInt(partes[1], 10);
   const diaNum = parseInt(partes[2], 10);
 
-  const mesesNomes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  const mesesNomes = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+    'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const mesNome = mesesNomes[mesNum - 1];
 
-  // Descobrir o dia da semana exato sem erros de fuso
   const dataObjFixo = new Date(ano, mesNum - 1, diaNum);
-  const diasSemana = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
+  const diasSemana = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA',
+    'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
   const diaSemanaNome = diasSemana[dataObjFixo.getDay()];
 
   const diaStr = String(diaNum).padStart(2, '0');
   const mesStr = String(mesNum).padStart(2, '0');
-  
+
   const dataFormatada = `${diaStr}/${mesStr}/${ano}`;
   const dataExtenso = `${diaSemanaNome}, ${diaNum} DE ${mesNome} DE ${ano}`;
 
@@ -77,7 +79,7 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   doc.text("CONTRATO", margem + 5, y + 5);
   doc.text("DATA DO EVENTO", margem + 65, y + 5);
   doc.text("HORÁRIO", margem + 130, y + 5);
-  
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(codContrato, margem + 5, y + 10);
@@ -85,61 +87,68 @@ document.getElementById('contractForm').addEventListener('submit', function (e) 
   doc.text(horario, margem + 130, y + 10);
   y += 20;
 
-  // Função para adicionar seções com FONTE 12
+  // --- FUNÇÃO DE SEÇÃO (com quebra de \n corrigida) ---
   function addSecao(titulo, texto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     const linhasTitulo = doc.splitTextToSize(titulo, larguraMax);
     verificarQuebra((linhasTitulo.length * 5) + 5);
     doc.text(linhasTitulo, margem, y);
-    y += (linhasTitulo.length * 5) + 2;
+    y += (linhasTitulo.length * 5) + 3;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(12); // Tamanho da letra exigido
-    const linhasTexto = doc.splitTextToSize(texto, larguraMax);
-    verificarQuebra(linhasTexto.length * 6);
-    doc.text(linhasTexto, margem, y);
-    y += (linhasTexto.length * 6) + 6;
+    doc.setFontSize(12);
+
+    const paragrafos = texto.split('\n');
+    let todasLinhas = [];
+    paragrafos.forEach(function (paragrafo) {
+      const linhas = doc.splitTextToSize(paragrafo, larguraMax);
+      todasLinhas = todasLinhas.concat(linhas);
+    });
+
+    verificarQuebra(todasLinhas.length * 6);
+    doc.text(todasLinhas, margem, y);
+    y += (todasLinhas.length * 6) + 6;
   }
 
   // --- CLÁUSULAS ---
-  addSecao("1. IDENTIFICAÇÃO DAS PARTES", 
+  addSecao("1. IDENTIFICAÇÃO DAS PARTES",
     `CONTRATADA: DUOVOX, nome artístico do projeto musical, neste ato representada por Arnaldo Lafaiete Roque Lopes, RG nº 24.267.067-2 SSP/SP, CPF nº 067.234.088-70, doravante denominada CONTRATADA.\nCONTRATANTE: ${nome}, CPF nº ${cpf}, residente à ${endCliente}, doravante denominada CONTRATANTE.`);
 
-  addSecao("2. OBJETO, LOCAL E DURAÇÃO", 
-    `A CONTRATADA realizará apresentação musical com o projeto DUOVOX, incluindo sonorização e iluminação, para evento do tipo "${tipoEvento}", nas condições abaixo:\n• DATA: ${dataExtenso}\n• HORÁRIO: ${horario}\n• LOCAL: ${localEvento}\nA apresentação encerra-se no horário previsto. Qualquer prorrogação dependerá de disponibilidade e concordância prévia das partes, com valor adicional por hora ou fração expressamente combinado por escrito antes da extensão.`);
+  addSecao("2. OBJETO, LOCAL E DURAÇÃO",
+    `A CONTRATADA realizará apresentação musical com o projeto DUOVOX, incluindo sonorização e iluminação, para evento do tipo "${tipoEvento}", nas condições abaixo:\n• DATA: ${dataExtenso}\n• HORÁRIO PREVISTO DO EVENTO: ${horario}\n• TEMPO DE SHOW AO VIVO: ${tempoShow}\n• LOCAL: ${localEvento}\nA apresentação ao vivo terá a duração prevista acima, podendo iniciar em momento posterior ao horário de abertura do evento, conforme combinado entre as partes. Qualquer prorrogação dependerá de disponibilidade e concordância prévia das partes, com valor adicional por hora ou fração expressamente combinado por escrito antes da extensão.`);
 
-  addSecao("3. VALOR E PAGAMENTO", 
+  addSecao("3. VALOR E PAGAMENTO",
     `VALOR TOTAL: ${valorTotalStr} | ENTRADA (50%): ${entrada} | SALDO (50%): ${saldo}\nA entrada de ${entrada} é devida na assinatura, para reserva da data. O saldo de ${saldo} deverá ser quitado até 18h do dia do evento, ou seja, até 2 (duas) horas antes do início previsto. A CONTRATADA poderá suspender a montagem ou a apresentação enquanto houver valor vencido e não pago.\nPIX: Titular Arnaldo Lafaiete Roque Lopes | Banco Nubank | Chave PIX: 17992248457. O pagamento será considerado realizado após a efetiva confirmação do crédito.`);
 
-  addSecao("4. ESTRUTURA TÉCNICA INCLUÍDA", 
+  addSecao("4. ESTRUTURA TÉCNICA INCLUÍDA",
     `O valor inclui sistema de som compatível com o evento e iluminação composta por canhões LED RGBWA, mini moving head spot, mini moving beam, centopeia RGB e máquina de fumaça, além de montagem, operação e desmontagem. A CONTRATANTE deverá assegurar acesso ao local em tempo hábil, área apropriada para montagem, fornecimento elétrico estável e seguro, mesa de apoio para até quatro profissionais e alimentação/bebidas não alcoólicas em quantidade razoável.`);
 
-  addSecao("5. REPERTÓRIO E CONDIÇÕES DA APRESENTAÇÃO", 
+  addSecao("5. REPERTÓRIO E CONDIÇÕES DA APRESENTAÇÃO",
     `A seleção e a ordem do repertório serão definidas pela CONTRATADA, considerando a proposta artística do DUOVOX. Pedidos específicos poderão ser avaliados previamente, sem garantia de inclusão. A CONTRATANTE deverá informar com antecedência eventuais restrições de horário, volume, uso de fumaça ou outras regras do espaço.`);
 
-  addSecao("6. OBRIGAÇÕES DA CONTRATADA", 
+  addSecao("6. OBRIGAÇÕES DA CONTRATADA",
     `Compete à CONTRATADA: (a) realizar a apresentação no local, data e período contratados; (b) fornecer e operar os equipamentos sob sua responsabilidade; (c) comunicar fatos relevantes que possam comprometer a execução; e (d) adotar cuidados razoáveis de segurança.`);
 
-  addSecao("7. OBRIGAÇÕES DA CONTRATANTE", 
+  addSecao("7. OBRIGAÇÕES DA CONTRATANTE",
     `Compete à CONTRATANTE: (a) pagar o preço nos prazos pactuados; (b) disponibilizar o local e o acesso necessários; (c) garantir instalação elétrica e condições estruturais adequadas; (d) obter alvarás e licenças exigíveis; (e) cumprir regras de segurança, lotação e ruído; e (f) manter ambiente seguro para artistas, equipe e equipamentos.`);
 
-  addSecao("8. ALIMENTAÇÃO, APOIO E DESLOCAMENTO", 
+  addSecao("8. ALIMENTAÇÃO, APOIO E DESLOCAMENTO",
     `A CONTRATANTE disponibilizará mesa de apoio para até quatro profissionais e alimentação e bebidas não alcoólicas em quantidade razoável para a equipe durante o período do evento. O preço contratado inclui o deslocamento ordinário da equipe.`);
 
-  addSecao("9. CANCELAMENTO, RESCISÃO E REMARCAÇÃO", 
+  addSecao("9. CANCELAMENTO, RESCISÃO E REMARCAÇÃO",
     `O pedido de cancelamento ou remarcação deverá ser comunicado por escrito. As partes deverão priorizar a remarcação consensual. Em caso de cancelamento imotivado pela CONTRATANTE, poderão ser descontadas despesas comprovadas e compensação proporcional pelo bloqueio da data, respeitada a legislação aplicável.`);
 
-  addSecao("10. RESPONSABILIDADE, DANOS E SEGURANÇA", 
+  addSecao("10. RESPONSABILIDADE, DANOS E SEGURANÇA",
     `Cada parte responde pelos danos que causar por ação ou omissão. A CONTRATANTE responde por danos aos equipamentos decorrentes de ato seu ou de convidados. A CONTRATADA poderá interromper temporariamente a operação diante de risco concreto à integridade de pessoas ou equipamentos.`);
 
-  addSecao("11. INTRANSFERIBILIDADE E ALTERAÇÕES", 
+  addSecao("11. INTRANSFERIBILIDADE E ALTERAÇÕES",
     `Este contrato não poderá ser cedido a terceiros sem concordância escrita. Alterações de data, horário, local, duração ou preço somente terão validade quando registradas por escrito e aceitas por ambas as partes.`);
 
-  addSecao("12. INADIMPLEMENTO E DISPOSIÇÕES LEGAIS", 
+  addSecao("12. INADIMPLEMENTO E DISPOSIÇÕES LEGAIS",
     `O descumprimento contratual sujeitará a parte responsável às consequências previstas neste instrumento e na legislação aplicável (Arts. 421 e 422 do Código Civil). Nenhuma disposição afasta direitos inderrogáveis de consumidor.`);
 
-  addSecao("13. FORO E ASSINATURAS", 
+  addSecao("13. FORO E ASSINATURAS",
     `Eventuais controvérsias serão submetidas ao foro legalmente competente, observando a proteção legal da CONTRATANTE como consumidora.`);
 
   // --- BLOCO DE ASSINATURAS ---
